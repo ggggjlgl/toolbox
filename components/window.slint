@@ -1,0 +1,126 @@
+import { Button, ComboBox, CheckBox, HorizontalBox, VerticalBox, ScrollView} from "std-widgets.slint";
+import { RenameFilesPanel } from "rename_files_panel.slint";
+import { FuncName, FuncInfo } from "models.slint";
+
+
+
+export global g {
+    public pure function get_text(name: FuncName) -> string {
+        if name == FuncName.RenameFiles {
+            return "修改文件路径";
+        } else if name == FuncName.ExtractFiles {
+            return "提取文件";
+        } else if name == FuncName.ExtractFiles {
+            return "对比剪贴板";
+        } else {
+            return "推送安卓文件";
+        }
+    }
+}
+
+component Func inherits Rectangle {
+    callback clicked;
+    in property <FuncName> name;
+    in-out property <bool> is_cur;
+    border-width: 2px;
+    border-color: is_cur ? green : gray;
+    border-radius: 5px;
+    Text {
+        color: gray;
+        text: g.get_text(name);
+    }
+
+    TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+
+
+export component MainWindow inherits Window {
+    height: 400px;
+    width: 600px;
+    title: "工具箱";
+    background: black;
+    icon: @image-url("../images/tools.png");
+    
+    in-out property <[FuncInfo]> funcs: [
+        { name: FuncName.RenameFiles, is_cur: true },
+        { name: FuncName.ExtractFiles, is_cur: false },
+        { name: FuncName.CompareClipBoard, is_cur: false },
+        { name: FuncName.PushFiles, is_cur: false },
+    ];
+
+
+    callback click_func(FuncName);
+    callback select_path() -> string;
+    glb := HorizontalBox {
+        height: parent.height;
+        width: parent.width;
+        func_icons := VerticalLayout {
+            height: parent.height - (self.y * 2);
+            width: parent.width * (1 / 6);
+            ScrollView {
+                height: parent.height;
+                width: parent.width;
+                viewport-height: max(parent.height, 4 * 100px);
+                for func[i] in funcs: Func {
+                    x: parent.x;
+                    y: i * (parent.height / 4);
+                    height: 82px;
+                    width: 82px;
+                    name: func.name;
+                    is_cur: func.is_cur;
+                    clicked => {
+                        click_func(self.name);
+                    }
+                }
+            }
+        }
+
+        detail := HorizontalLayout {
+            height: parent.height;
+            width: parent.width * (5 / 6);
+
+            if funcs[0].is_cur: RenameFilesPanel {
+                height: parent.height;
+                width: parent.width;
+                name: funcs[0].name;
+                select_path => {
+                    return root.select_path();
+                }
+            }
+            if funcs[1].is_cur: VerticalBox {
+                height: parent.height;
+                width: parent.width;
+                visible: funcs[1].is_cur;
+                in-out property <FuncName> name: funcs[1].name;
+                Text {
+                    text: g.get_text(name);
+                }
+            }
+            if funcs[2].is_cur: VerticalBox {
+                height: parent.height;
+                width: parent.width;
+                visible: funcs[2].is_cur;
+                in-out property <FuncName> name: funcs[2].name;
+                Text {
+                    text: g.get_text(name);
+                }
+            }
+            if funcs[3].is_cur: VerticalBox {
+                height: parent.height;
+                width: parent.width;
+                visible: funcs[3].is_cur;
+                in-out property <FuncName> name: funcs[3].name;
+                Text {
+                    text: g.get_text(name);
+                }
+            }
+
+    }
+}
+
+}
