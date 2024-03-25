@@ -1,6 +1,6 @@
 import { Button, ComboBox, CheckBox, HorizontalBox, VerticalBox, ScrollView} from "std-widgets.slint";
 import { RenameFilesPanel } from "rename_files_panel.slint";
-import { FuncName, FuncInfo } from "models.slint";
+import { FuncName, FuncInfo, RenameFilesRun } from "models.slint";
 
 
 
@@ -46,7 +46,7 @@ export component MainWindow inherits Window {
     background: black;
     icon: @image-url("../images/tools.png");
     
-    in-out property <[FuncInfo]> funcs: [
+    in-out property <[FuncInfo]> func_infos: [
         { name: FuncName.RenameFiles, is_cur: true },
         { name: FuncName.ExtractFiles, is_cur: false },
         { name: FuncName.CompareClipBoard, is_cur: false },
@@ -56,6 +56,7 @@ export component MainWindow inherits Window {
 
     callback click_func(FuncName);
     callback select_path() -> string;
+    callback run_rename_files(RenameFilesRun);
     glb := HorizontalBox {
         height: parent.height;
         width: parent.width;
@@ -66,7 +67,7 @@ export component MainWindow inherits Window {
                 height: parent.height;
                 width: parent.width;
                 viewport-height: max(parent.height, 4 * 100px);
-                for func[i] in funcs: Func {
+                for func[i] in func_infos: Func {
                     x: parent.x;
                     y: i * (parent.height / 4);
                     height: 82px;
@@ -84,37 +85,40 @@ export component MainWindow inherits Window {
             height: parent.height;
             width: parent.width * (5 / 6);
 
-            if funcs[0].is_cur: RenameFilesPanel {
+            if func_infos[0].is_cur: RenameFilesPanel {
                 height: parent.height;
                 width: parent.width;
-                name: funcs[0].name;
+                name: func_infos[0].name;
                 select_path => {
                     return root.select_path();
                 }
+                run(run_info) => {
+                    root.run_rename_files(run_info)
+                }
             }
-            if funcs[1].is_cur: VerticalBox {
+            if func_infos[1].is_cur: VerticalBox {
                 height: parent.height;
                 width: parent.width;
-                visible: funcs[1].is_cur;
-                in-out property <FuncName> name: funcs[1].name;
+                visible: func_infos[1].is_cur;
+                in-out property <FuncName> name: func_infos[1].name;
                 Text {
                     text: g.get_text(name);
                 }
             }
-            if funcs[2].is_cur: VerticalBox {
+            if func_infos[2].is_cur: VerticalBox {
                 height: parent.height;
                 width: parent.width;
-                visible: funcs[2].is_cur;
-                in-out property <FuncName> name: funcs[2].name;
+                visible: func_infos[2].is_cur;
+                in-out property <FuncName> name: func_infos[2].name;
                 Text {
                     text: g.get_text(name);
                 }
             }
-            if funcs[3].is_cur: VerticalBox {
+            if func_infos[3].is_cur: VerticalBox {
                 height: parent.height;
                 width: parent.width;
-                visible: funcs[3].is_cur;
-                in-out property <FuncName> name: funcs[3].name;
+                visible: func_infos[3].is_cur;
+                in-out property <FuncName> name: func_infos[3].name;
                 Text {
                     text: g.get_text(name);
                 }

@@ -1,5 +1,5 @@
 [package]
-name = "learn_rust"
+name = "toolbox"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 slint = "1.5.1"
+rfd = "0.14.1"
+walkdir = "2"
 
 [build-dependencies]
 slint-build = "1.5.1"

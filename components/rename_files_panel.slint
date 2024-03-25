@@ -1,21 +1,24 @@
 import { VerticalBox, HorizontalBox, ComboBox, Button, TextEdit } from "std-widgets.slint";
-import { FuncName } from "models.slint";
+import { FuncName, RenameFilesRun } from "models.slint";
 
 export component RenameFilesPanel inherits VerticalBox {
     in-out property <FuncName> name;
+    in-out property <RenameFilesRun> run_info: {
+        method: method.current-value,
+        path: path.text,
+        specify_characters: specify_characters.text,
+    };
     callback select_path() -> string;
+    callback run(RenameFilesRun);
     HorizontalBox {
         height: parent.height * (1/6);
-        // width: parent.width;
         Text {
             vertical-alignment: center;
-            // height: parent.height;
             width: parent.width / 3;
             text: "请选择批量修改方法：";
         }
-        ComboBox {
+        method := ComboBox {
             height: parent.height / 2;
-            // y: parent.y;
             width: parent.width / 2;
             current-index: 0;
             model: [
@@ -31,22 +34,18 @@ export component RenameFilesPanel inherits VerticalBox {
     }
     HorizontalBox {
         height: parent.height * (1/6);
-        // width: parent.width;
         Text {
-            // height: parent.height;
             vertical-alignment: center;
             width: parent.width / 3;
             text: "请选择批量路径：";
         }
-        path:= TextEdit {
-            height: parent.height / 2;
-            // y: parent.y;
+        path := TextEdit {
+            height: parent.height / 5 * 3;
             width: parent.width / 3;
             text: "/";
         }
         Button {
             height: parent.height / 2;
-            // y: parent.y;
             text: "选择";
             colorize-icon: true;
             width: 60px;
@@ -57,18 +56,15 @@ export component RenameFilesPanel inherits VerticalBox {
     }
     HorizontalBox {
         height: parent.height * (1/6);
-        // width: parent.width;
         Text {
-            // height: parent.height;
             width: parent.width / 3;
             vertical-alignment: center;
             text: "请指定字符：";
         }
         specify_characters := TextEdit {
             height: parent.height / 2;
-            // y: parent.y;
             width: parent.width / 2;
-            text: "旧字符串批量替换至新字符串";
+            text: "";
         }
         
     }
@@ -78,7 +74,7 @@ export component RenameFilesPanel inherits VerticalBox {
             read-only: true;
             wrap: TextWrap.word-wrap;
             height: parent.height;
-            text: "注意：替换字符类方法须同时提供旧字符和新字符，并使用'批量替换至'连接。例如：旧字符串批量替换至新字符串";
+            text: "注意：替换字符类方法须同时提供旧字符和新字符，并使用'-批量替换至-'连接。例如：旧字符串批量替换至新字符串";
         }
         
     }
@@ -86,20 +82,27 @@ export component RenameFilesPanel inherits VerticalBox {
         height: parent.height * (1/6);
         width: parent.width;
         Button {
-            // height: 20px;
             width: 60px;
             text: "清除";
             colorize-icon: true;
+            clicked => {
+                method.current-index = 0;
+                method.current-value = method.model[method.current-index];
+                path.text = "";
+                specify-characters.text = "";
+            }
         }
         HorizontalBox {
             height: parent.height;
             width: 260px;
         }
         Button {
-            // height: 20px;
             width: 60px;
             text: "运行";
             colorize-icon: true;
+            clicked => {
+                root.run(run_info)
+            }
         }
         
     }
