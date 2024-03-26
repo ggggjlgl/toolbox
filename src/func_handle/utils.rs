@@ -1,20 +1,14 @@
-
+use rfd::{FileDialog, MessageButtons, MessageDialogResult, MessageLevel};
 use std::fs::{copy, rename};
 use std::io;
 use std::path::{Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
-use rfd::{FileDialog, MessageDialogResult, MessageLevel, MessageButtons};
-
-
 
 pub fn pick_dir() -> String {
-    if let Some(pb) = FileDialog::new()
-        .set_directory("/")
-        .pick_folder()
-    {
-        return pb.to_string_lossy().into_owned();
+    if let Some(pb) = FileDialog::new().set_directory("/").pick_folder() {
+        pb.to_string_lossy().into_owned()
     } else {
-        return "".to_string();
+        "".to_string()
     }
 }
 
@@ -70,7 +64,6 @@ where
     Ok(())
 }
 
-
 pub struct MessageInfo {
     pub desc: String,
     pub title: String,
@@ -79,7 +72,7 @@ pub struct MessageInfo {
 }
 
 impl From<&str> for MessageInfo {
-    // 特殊实现，只接管仅提供了desc(错误信息)的UserError
+    // 特殊实现，只接管仅提供了desc(错误信息)的MessageInfo
     fn from(s: &str) -> Self {
         Self {
             desc: s.to_string(),
@@ -99,10 +92,17 @@ pub fn pop_message(mes_info: MessageInfo) -> MessageDialogResult {
         .show()
 }
 
-pub fn get_entry_target(entry: &DirEntry) -> &str {
-    if !entry.path().is_file() {return ""}
-    entry
-        .file_name()
+pub fn get_entry_target<F>(entry: &DirEntry, f: F) -> bool
+where F: Fn (&str) -> bool
+{
+    if (!entry.path().is_file()) || entry.file_name().to_str().unwrap().starts_with(".") {
+        return false;
+    }
+
+    f(entry
+        .path()
+        .file_stem()
+        .unwrap_or("".as_ref())
         .to_str()
-        .unwrap_or("")
+        .unwrap())
 }

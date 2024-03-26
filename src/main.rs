@@ -43,12 +43,10 @@ fn main() {
         }
     });
 
-    main_window.on_select_path(|| {
-        SharedString::from(utils::pick_dir())
-    });
+    main_window.on_select_path(|| SharedString::from(utils::pick_dir()));
 
     main_window.on_run_rename_files(|run_info| {
-        let run_info = RenameFilesRunInfo::from(run_info);
+        let mut run_info = RenameFilesRunInfo::from(run_info);
         run_info.handle_run();
     });
 
