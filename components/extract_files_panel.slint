@@ -1,0 +1,82 @@
+import { VerticalBox, HorizontalBox, ComboBox, Button, TextEdit } from "std-widgets.slint";
+import { ExtractFilesRun, CheckedItem } from "models.slint";
+import { SelectWithTip, DirPickerWithTip, InputWithTip, MultiLinesTip, ButtonGroup, ScollCheckBox, CheckBoxWithTip } from "common.slint";
+
+export component ExtractFilesPanel inherits VerticalBox {
+    in-out property <bool> need_target_path: method.selection == "提取文件至指定目录下";
+    in-out property <[CheckedItem]> extensions;
+    in-out property <string> origin;
+    
+    in-out property <ExtractFilesRun> run_info: {
+        method: method.selection,
+        origin_path: origin_path.path,
+        need_target_path: need_target_path,
+        target_path: target-path.path,       
+        file_es: extensions,
+        dele_origin: dele-origin.checked,
+    };
+    out property <[string]> methods: [
+        "提取文件至源目录下",
+        "提取文件至指定目录下",
+    ];
+
+    callback select_dir() -> string;
+    callback run(ExtractFilesRun);
+    callback origin_selected(string) -> [CheckedItem];
+    
+    
+
+    method := SelectWithTip {
+        height: parent.height * (1/8);
+        tip: "请选择提取方法：";
+        selections: root.methods;
+    }
+
+    origin_path := DirPickerWithTip {
+        height: parent.height * (1/8);
+        tip: "请选择源目录：";
+        can_edit: false;
+        select_dir => {
+            origin = root.select_dir();
+            extensions = root.origin_selected(origin);
+            return origin;
+        }
+    }
+
+    target_path := DirPickerWithTip {
+        height: parent.height * (1/8);
+        visible: need_target_path;
+        tip: "请选择目标目录：";
+        select_dir => {
+            return root.select_dir();
+        }
+    }
+
+    ScollCheckBox {
+        height: parent.height * (1/8);
+        items <=> extensions;
+        tip: "请指定文件后缀：";
+    }
+
+    dele_origin := CheckBoxWithTip {
+        height: parent.height * (1/8);
+        tip: "请指定是否删除源文件：";
+    }
+
+    
+
+    ButtonGroup {
+        height: parent.height * (1/8);
+        width: parent.width;
+        clear => {
+            method.index = 0;
+            method.selection = method.selections[method.index];
+            origin-path.path = "";
+            if need_target_path {target_path.path = ""}
+            extensions = [];
+        }
+        run => {
+            root.run(run_info)
+        }
+    }
+}

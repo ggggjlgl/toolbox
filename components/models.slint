@@ -1,18 +1,23 @@
-export enum FuncName {
-    RenameFiles,
-    ExtractFiles,
-    CompareClipBoard,
-    PushFiles
-}
 
-
-export struct FuncInfo {
-    name: FuncName,
-    is_cur: bool,
-}
 
 export struct RenameFilesRun {
     method: string,
     path: string,
     specify_characters: string,
 }
+
+export struct CheckedItem {
+    item: string,
+    checked: bool,
+}
+
+
+export struct ExtractFilesRun {
+    method: string,
+    origin_path: string,
+    need_target_path: bool,
+    target_path: string,
+    file_es: [CheckedItem],
+    dele_origin: bool,
+}
+

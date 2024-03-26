@@ -1,41 +1,15 @@
 import { Button, ComboBox, CheckBox, HorizontalBox, VerticalBox, ScrollView} from "std-widgets.slint";
 import { RenameFilesPanel } from "rename_files_panel.slint";
-import { FuncName, FuncInfo, RenameFilesRun } from "models.slint";
+import { RenameFilesRun, ExtractFilesRun, CheckedItem } from "models.slint";
+import { ExtractFilesPanel } from "extract_files_panel.slint";
+import { FuncListPanel } from "func_list_panel.slint";
 
 
 
-export global g {
-    public pure function get_text(name: FuncName) -> string {
-        if name == FuncName.RenameFiles {
-            return "修改文件路径";
-        } else if name == FuncName.ExtractFiles {
-            return "提取文件";
-        } else if name == FuncName.ExtractFiles {
-            return "对比剪贴板";
-        } else {
-            return "推送安卓文件";
-        }
-    }
-}
 
-component Func inherits Rectangle {
-    callback clicked;
-    in property <FuncName> name;
-    in-out property <bool> is_cur;
-    border-width: 2px;
-    border-color: is_cur ? green : gray;
-    border-radius: 5px;
-    Text {
-        color: gray;
-        text: g.get_text(name);
-    }
 
-    TouchArea {
-        clicked => {
-            root.clicked();
-        }
-    }
-}
+
+
 
 
 
@@ -45,82 +19,81 @@ export component MainWindow inherits Window {
     title: "工具箱";
     background: black;
     icon: @image-url("../images/tools.png");
-    
-    in-out property <[FuncInfo]> func_infos: [
-        { name: FuncName.RenameFiles, is_cur: true },
-        { name: FuncName.ExtractFiles, is_cur: false },
-        { name: FuncName.CompareClipBoard, is_cur: false },
-        { name: FuncName.PushFiles, is_cur: false },
-    ];
 
 
-    callback click_func(FuncName);
-    callback select_path() -> string;
+    in-out property <string> cur_func_name <=> func-list.cur_func_name;
+
+    callback select_dir() -> string;
     callback run_rename_files(RenameFilesRun);
+    callback run_extract_files(ExtractFilesRun);
+    callback get_extensions(string) -> [CheckedItem];
     glb := HorizontalBox {
         height: parent.height;
         width: parent.width;
-        func_icons := VerticalLayout {
+        // func_icons := VerticalLayout {
+        //     height: parent.height - (self.y * 2);
+        //     width: parent.width * (1 / 6);
+        //     ScrollView {
+        //         height: parent.height;
+        //         width: parent.width;
+        //         viewport-height: max(parent.height, 4 * 100px);
+        //         for func[i] in func_infos: Func {
+        //             x: parent.x;
+        //             y: i * (parent.height / 4);
+        //             height: 82px;
+        //             width: 82px;
+        //             name: func.name;
+        //             is_cur: func.is_cur;
+        //             clicked => {
+        //                 click_func(self.name);
+        //             }
+        //         }
+        //     }
+        // }
+        func_list := FuncListPanel{
             height: parent.height - (self.y * 2);
             width: parent.width * (1 / 6);
-            ScrollView {
-                height: parent.height;
-                width: parent.width;
-                viewport-height: max(parent.height, 4 * 100px);
-                for func[i] in func_infos: Func {
-                    x: parent.x;
-                    y: i * (parent.height / 4);
-                    height: 82px;
-                    width: 82px;
-                    name: func.name;
-                    is_cur: func.is_cur;
-                    clicked => {
-                        click_func(self.name);
-                    }
-                }
-            }
         }
 
         detail := HorizontalLayout {
             height: parent.height;
             width: parent.width * (5 / 6);
 
-            if func_infos[0].is_cur: RenameFilesPanel {
+            if cur_func_name == "修改文件路径": RenameFilesPanel {
                 height: parent.height;
                 width: parent.width;
-                name: func_infos[0].name;
-                select_path => {
-                    return root.select_path();
+                select_dir => {
+                    return root.select_dir();
                 }
                 run(run_info) => {
                     root.run_rename_files(run_info)
                 }
-            }
-            if func_infos[1].is_cur: VerticalBox {
+            } 
+            if cur_func_name == "提取文件": ExtractFilesPanel {
                 height: parent.height;
                 width: parent.width;
-                visible: func_infos[1].is_cur;
-                in-out property <FuncName> name: func_infos[1].name;
-                Text {
-                    text: g.get_text(name);
+                select_dir => {
+                    root.select_dir()
+                }
+                run(run_info) => {
+                    root.run_extract_files(run_info)
+                }
+                origin_selected(s) => {
+                    root.get_extensions(s)
                 }
             }
-            if func_infos[2].is_cur: VerticalBox {
+            if cur_func_name == "对比剪贴板": VerticalBox {
                 height: parent.height;
                 width: parent.width;
-                visible: func_infos[2].is_cur;
-                in-out property <FuncName> name: func_infos[2].name;
                 Text {
-                    text: g.get_text(name);
+                    text: "对比剪贴板";
                 }
             }
-            if func_infos[3].is_cur: VerticalBox {
+            if cur_func_name == "推送安卓文件": VerticalBox {
                 height: parent.height;
                 width: parent.width;
-                visible: func_infos[3].is_cur;
-                in-out property <FuncName> name: func_infos[3].name;
                 Text {
-                    text: g.get_text(name);
+                    text: "推送安卓文件";
                 }
             }
 

@@ -1,0 +1,52 @@
+import { ScrollView } from "std-widgets.slint";
+
+
+
+
+
+component FuncIcon inherits Rectangle {
+    callback clicked;
+    border-width: 2px;
+    in-out property <string> name;
+    in-out property <bool> is_cur;
+
+    border-color: is_cur ? green : gray;
+    border-radius: 5px;
+    Text {
+        color: gray;
+        text: name;
+    }
+
+    TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+export component FuncListPanel inherits VerticalLayout {
+    in-out property <[string]> func_names: [
+        "修改文件路径",
+        "提取文件",
+        "对比剪贴板",
+        "推送安卓文件",
+    ];
+    in-out property <string> cur_func_name: "修改文件路径";
+
+    ScrollView {
+        height: parent.height;
+        width: parent.width;
+        viewport-height: max(parent.height, 4 * 100px);
+        for func_name[i] in func_names: FuncIcon {
+            x: parent.x;
+            y: i * (parent.height / 4);
+            height: 82px;
+            width: 82px;
+            name: func-name;
+            is_cur: self.name == root.cur_func_name;
+            clicked => {
+                root.cur_func_name = func_name
+            }
+        }
+    }
+}

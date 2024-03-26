@@ -1,0 +1,141 @@
+import { HorizontalBox, ComboBox, TextEdit, Button, ScrollView, CheckBox } from "std-widgets.slint";
+import { CheckedItem } from "models.slint";
+export component SelectWithTip inherits HorizontalBox {
+    in property <string> tip;
+    in property <[string]> selections;
+    in-out property <string> selection <=> selection.current-value;
+    in-out property <int> index <=> selection.current-index;
+    Text {
+        vertical-alignment: center;
+        width: parent.width / 3;
+        text: tip;
+    }
+    selection := ComboBox {
+        height: parent.height / 2;
+        width: parent.width / 2;
+        current-index: 0;
+        model: selections;
+    }
+}
+
+export component DirPickerWithTip inherits HorizontalBox {
+    in property <string> tip;
+    in-out property <string> path <=> path.text;
+    in-out property <bool> can_edit <=> path.enabled;
+    callback select_dir() -> string;
+    Text {
+        vertical-alignment: center;
+        width: parent.width / 3;
+        text: tip;
+    }
+    path := TextEdit {
+        height: parent.height / 5 * 3;
+        width: parent.width / 3;
+        text: "";
+    }
+    Button {
+        height: parent.height / 2;
+        text: "选择";
+        colorize-icon: true;
+        width: 60px;
+        clicked => {
+            path.text = root.select_dir()
+        }
+    }
+}
+
+export component InputWithTip inherits HorizontalBox {
+    in property <string> tip;
+    in-out property <string> input <=> input.text;
+    Text {
+        width: parent.width / 3;
+        vertical-alignment: center;
+        text: tip;
+    }
+    input := TextEdit {
+        height: parent.height / 2;
+        width: parent.width / 2;
+        text: "";
+    }
+}
+
+export component MultiLinesTip inherits HorizontalBox {
+    in property <string> tip;
+    TextEdit {
+        read-only: true;
+        wrap: TextWrap.word-wrap;
+        height: parent.height;
+        text: tip;
+    }
+}
+
+
+export component ButtonGroup inherits HorizontalBox {
+    callback clear();
+    callback run();
+    Button {
+        width: 60px;
+        text: "清除";
+        colorize-icon: true;
+        clicked => {
+            root.clear()
+        }
+    }
+    HorizontalBox {
+        height: parent.height;
+        width: parent.width - 220px;
+    }
+    Button {
+        width: 60px;
+        text: "运行";
+        colorize-icon: true;
+        clicked => {
+            root.run()
+        }
+    }
+    
+}
+
+export component ScollCheckBox inherits ScrollView {
+    in property <string> tip;
+    in-out property <[CheckedItem]> items;
+    Text {
+        vertical-alignment: center;
+        width: parent.width / 3;
+        text: tip;
+    }
+    ScrollView {
+        height: parent.height;
+        width: parent.width / 2;
+        viewport-width: self.width;
+        viewport-height: self.height + 20px;
+        
+        for item[i] in items: CheckBox {
+            text: item.item;
+            checked: item.checked;
+            toggled => {
+                if self.checked {
+                    items[i].checked = true
+                } else {
+                    items[i].checked = false
+                }
+            }
+        }
+
+    }
+}
+
+export component CheckBoxWithTip {
+    in property <string> tip;
+    in-out property <bool> checked <=> box.checked;
+    Text {
+        vertical-alignment: center;
+        width: parent.width / 3;
+        text: tip;
+    }
+    box := CheckBox {
+        height: parent.height / 2;
+        width: parent.width / 2;
+        text: "删除源文件";
+    }
+}
