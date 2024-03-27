@@ -1,6 +1,6 @@
 import { VerticalBox, HorizontalBox, ComboBox, Button, TextEdit } from "std-widgets.slint";
 import { RenameFilesRun } from "models.slint";
-import { SelectWithTip, DirPickerWithTip, InputWithTip, MultiLinesTip, ButtonGroup } from "common.slint";
+import { SelectWithTip, DirPickerWithTip, InputWithTip, MultiLinesTip, ButtonGroup, Space } from "common.slint";
 
 export component RenameFilesPanel inherits VerticalBox {
     out property <[string]> methods: [
@@ -19,15 +19,19 @@ export component RenameFilesPanel inherits VerticalBox {
     };
     callback select_dir() -> string;
     callback run(RenameFilesRun);
+    spacing: 40px;
+    alignment: center;
+
 
     method := SelectWithTip {
-        height: parent.height * (1/6);
+        height: 60px;
         tip: "请选择批量修改方法：";
         selections: root.methods;
     }
 
+
     path := DirPickerWithTip {
-        height: parent.height * (1/6);
+        height: 60px;
         tip: "请选择操作路径：";
         can_edit: true;
         select_dir => {
@@ -35,19 +39,22 @@ export component RenameFilesPanel inherits VerticalBox {
         }
     }
 
+
     specify_characters := InputWithTip {
-        height: parent.height * (1/6);
+        height: 60px;
         tip: "请指定字符：";
     }
 
+
     MultiLinesTip {
-        height: parent.height * (1/6);
+        height: 80px;
         tip: "注意：替换字符类方法须同时提供旧字符和新字符，并使用'-批量替换至-'连接。例如：旧字符串批量替换至新字符串";
     }
 
+    
+
     ButtonGroup {
-        height: parent.height * (1/6);
-        width: parent.width;
+        height: 80px;
         clear => {
             method.index = 0;
             method.selection = method.selections[method.index];

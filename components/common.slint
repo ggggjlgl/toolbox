@@ -11,7 +11,6 @@ export component SelectWithTip inherits HorizontalBox {
         text: tip;
     }
     selection := ComboBox {
-        height: parent.height / 2;
         width: parent.width / 2;
         current-index: 0;
         model: selections;
@@ -29,15 +28,13 @@ export component DirPickerWithTip inherits HorizontalBox {
         text: tip;
     }
     path := TextEdit {
-        height: parent.height / 5 * 3;
-        width: parent.width / 3;
+        width: parent.width / 2;
+        wrap: TextWrap.no-wrap;
         text: "";
     }
     Button {
-        height: parent.height / 2;
         text: "选择";
         colorize-icon: true;
-        width: 60px;
         clicked => {
             path.text = root.select_dir()
         }
@@ -53,7 +50,6 @@ export component InputWithTip inherits HorizontalBox {
         text: tip;
     }
     input := TextEdit {
-        height: parent.height / 2;
         width: parent.width / 2;
         text: "";
     }
@@ -64,7 +60,6 @@ export component MultiLinesTip inherits HorizontalBox {
     TextEdit {
         read-only: true;
         wrap: TextWrap.word-wrap;
-        height: parent.height;
         text: tip;
     }
 }
@@ -73,20 +68,20 @@ export component MultiLinesTip inherits HorizontalBox {
 export component ButtonGroup inherits HorizontalBox {
     callback clear();
     callback run();
+    spacing: 500px;
+    alignment: center;
     Button {
         width: 60px;
+        height: 40px;
         text: "清除";
         colorize-icon: true;
         clicked => {
             root.clear()
         }
     }
-    HorizontalBox {
-        height: parent.height;
-        width: parent.width - 220px;
-    }
     Button {
         width: 60px;
+        height: 40px;
         text: "运行";
         colorize-icon: true;
         clicked => {
@@ -96,7 +91,7 @@ export component ButtonGroup inherits HorizontalBox {
     
 }
 
-export component ScollCheckBox inherits ScrollView {
+export component ScollCheckBox inherits HorizontalBox {
     in property <string> tip;
     in-out property <[CheckedItem]> items;
     Text {
@@ -105,12 +100,15 @@ export component ScollCheckBox inherits ScrollView {
         text: tip;
     }
     ScrollView {
-        height: parent.height;
         width: parent.width / 2;
         viewport-width: self.width;
-        viewport-height: self.height + 20px;
+        viewport-height: max(self.height, (items.length + 2) * 20px);
         
         for item[i] in items: CheckBox {
+            x: parent.x;
+            y: parent.y + (i + 1) * self.height;
+            height: 20px;
+            // width: parent.width;
             text: item.item;
             checked: item.checked;
             toggled => {
@@ -125,7 +123,7 @@ export component ScollCheckBox inherits ScrollView {
     }
 }
 
-export component CheckBoxWithTip {
+export component CheckBoxWithTip inherits HorizontalBox {
     in property <string> tip;
     in-out property <bool> checked <=> box.checked;
     Text {
@@ -138,4 +136,8 @@ export component CheckBoxWithTip {
         width: parent.width / 2;
         text: "删除源文件";
     }
+}
+
+export component Space inherits HorizontalLayout{
+    
 }

@@ -24,27 +24,28 @@ export component ExtractFilesPanel inherits VerticalBox {
     callback run(ExtractFilesRun);
     callback origin_selected(string) -> [CheckedItem];
     
-    
+    spacing: 10px;
 
     method := SelectWithTip {
-        height: parent.height * (1/8);
+        height: 60px;
         tip: "请选择提取方法：";
         selections: root.methods;
     }
 
     origin_path := DirPickerWithTip {
-        height: parent.height * (1/8);
+        height: 60px;
         tip: "请选择源目录：";
         can_edit: false;
         select_dir => {
             origin = root.select_dir();
             extensions = root.origin_selected(origin);
+            debug(extensions);
             return origin;
         }
     }
 
     target_path := DirPickerWithTip {
-        height: parent.height * (1/8);
+        height: 60px;
         visible: need_target_path;
         tip: "请选择目标目录：";
         select_dir => {
@@ -53,21 +54,20 @@ export component ExtractFilesPanel inherits VerticalBox {
     }
 
     ScollCheckBox {
-        height: parent.height * (1/8);
+        height: 200px;
         items <=> extensions;
         tip: "请指定文件后缀：";
     }
 
     dele_origin := CheckBoxWithTip {
-        height: parent.height * (1/8);
+        height: 40px;
         tip: "请指定是否删除源文件：";
     }
 
     
 
     ButtonGroup {
-        height: parent.height * (1/8);
-        width: parent.width;
+        height: 80px;
         clear => {
             method.index = 0;
             method.selection = method.selections[method.index];

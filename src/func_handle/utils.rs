@@ -1,8 +1,13 @@
-use rfd::{FileDialog, MessageButtons, MessageDialogResult, MessageLevel};
+use std::collections::HashSet;
 use std::fs::{copy, rename};
 use std::io;
 use std::path::{Path, PathBuf};
+
+use rfd::{FileDialog, MessageButtons, MessageDialogResult, MessageLevel};
+use slint::SharedString;
 use walkdir::{DirEntry, WalkDir};
+
+use crate::CheckedItem;
 
 pub fn pick_dir() -> String {
     if let Some(pb) = FileDialog::new().set_directory("/").pick_folder() {
@@ -93,9 +98,13 @@ pub fn pop_message(mes_info: MessageInfo) -> MessageDialogResult {
 }
 
 pub fn get_entry_target<F>(entry: &DirEntry, f: F) -> bool
-where F: Fn (&str) -> bool
+where
+    F: Fn(&str) -> bool,
 {
-    if (!entry.path().is_file()) || entry.file_name().to_str().unwrap().starts_with(".") {
+    if (!entry.path().is_file()) ||
+     entry.file_name().to_str().unwrap().starts_with(".") ||
+     (entry.path().extension().is_some() && entry.file_name() == entry.path().extension().unwrap())
+    {
         return false;
     }
 
@@ -105,4 +114,33 @@ where F: Fn (&str) -> bool
         .unwrap_or("".as_ref())
         .to_str()
         .unwrap())
+}
+
+pub fn get_extensions_by_dir(dir: String) -> Vec<CheckedItem> {
+    let mut tmp = HashSet::new();
+
+    WalkDir::new(dir)
+        .into_iter()
+        .filter_map(|file_res| file_res.ok())
+        .filter(
+            |entry| entry.path().is_file() 
+            && (!entry.file_name().to_str().unwrap().starts_with(".") &&
+            entry.path().extension().is_some() && (entry.file_name() != entry.path().extension().unwrap())
+        )
+        )
+        .for_each(|file| {
+            tmp.insert(
+                CheckedItem {
+                    checked: false,
+                    item: SharedString::from(
+                        file
+                        .path()
+                        .extension().unwrap()
+                        .to_str().unwrap()
+                    ),
+                }
+            );
+        });
+    let extensions: Vec<CheckedItem> = tmp.into_iter().collect();
+    extensions
 }

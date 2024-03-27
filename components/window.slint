@@ -14,8 +14,8 @@ import { FuncListPanel } from "func_list_panel.slint";
 
 
 export component MainWindow inherits Window {
-    height: 400px;
-    width: 600px;
+    height: 600px;
+    width: 800px;
     title: "工具箱";
     background: black;
     icon: @image-url("../images/tools.png");
@@ -28,36 +28,16 @@ export component MainWindow inherits Window {
     callback run_extract_files(ExtractFilesRun);
     callback get_extensions(string) -> [CheckedItem];
     glb := HorizontalBox {
-        height: parent.height;
-        width: parent.width;
-        // func_icons := VerticalLayout {
-        //     height: parent.height - (self.y * 2);
-        //     width: parent.width * (1 / 6);
-        //     ScrollView {
-        //         height: parent.height;
-        //         width: parent.width;
-        //         viewport-height: max(parent.height, 4 * 100px);
-        //         for func[i] in func_infos: Func {
-        //             x: parent.x;
-        //             y: i * (parent.height / 4);
-        //             height: 82px;
-        //             width: 82px;
-        //             name: func.name;
-        //             is_cur: func.is_cur;
-        //             clicked => {
-        //                 click_func(self.name);
-        //             }
-        //         }
-        //     }
-        // }
+        // height: parent.height;
+        // width: parent.width;
         func_list := FuncListPanel{
             height: parent.height - (self.y * 2);
-            width: parent.width * (1 / 6);
+            width: 100px;
         }
 
         detail := HorizontalLayout {
-            height: parent.height;
-            width: parent.width * (5 / 6);
+            // height: parent.height;
+            width: 680px;
 
             if cur_func_name == "修改文件路径": RenameFilesPanel {
                 height: parent.height;

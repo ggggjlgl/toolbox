@@ -45,6 +45,7 @@ fn main() {
     // });
 
     main_window.on_select_dir(|| SharedString::from(utils::pick_dir()));
+    main_window.on_get_extensions(|dir| slint::ModelRc::from(std::rc::Rc::new(slint::VecModel::from(utils::get_extensions_by_dir(dir.to_string())))));
 
     main_window.on_run_rename_files(|run_info| {
         let mut run_info = RenameFilesRunInfo::from(run_info);

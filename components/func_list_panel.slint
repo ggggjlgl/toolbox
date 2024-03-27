@@ -36,12 +36,12 @@ export component FuncListPanel inherits VerticalLayout {
     ScrollView {
         height: parent.height;
         width: parent.width;
-        viewport-height: max(parent.height, 4 * 100px);
+        viewport-height: max(parent.height, func_names.length * 120px);
         for func_name[i] in func_names: FuncIcon {
-            x: parent.x;
-            y: i * (parent.height / 4);
-            height: 82px;
-            width: 82px;
+            height: 80px;
+            width: 80px;
+            x: parent.x + 10px;
+            y: i * self.height + 20px * (i + 1);
             name: func-name;
             is_cur: self.name == root.cur_func_name;
             clicked => {
