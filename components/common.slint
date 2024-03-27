@@ -102,13 +102,12 @@ export component ScollCheckBox inherits HorizontalBox {
     ScrollView {
         width: parent.width / 2;
         viewport-width: self.width;
-        viewport-height: max(self.height, (items.length + 2) * 20px);
+        viewport-height: max(self.height, (items.length + 1) * 20px);
         
         for item[i] in items: CheckBox {
             x: parent.x;
-            y: parent.y + (i + 1) * self.height;
+            y: parent.y + i * self.height;
             height: 20px;
-            // width: parent.width;
             text: item.item;
             checked: item.checked;
             toggled => {

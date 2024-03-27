@@ -1,7 +1,12 @@
-use super::utils::{get_entry, get_entry_target, move_files, pop_message, MessageInfo};
+use super::utils::{
+    get_entry, get_target_str_ok, handle_copy_move_files, pop_message, MessageInfo,
+};
 use crate::RenameFilesRun;
 use rfd::{MessageButtons, MessageLevel};
-use std::path::{Path, PathBuf};
+use std::{
+    fs::rename,
+    path::{Path, PathBuf},
+};
 
 pub struct RenameFilesRunInfo {
     pub method: String,
@@ -45,24 +50,6 @@ impl RenameFilesRunInfo {
         }
     }
 
-    fn handle_names<F>(&self, files: Vec<PathBuf>, f: F) -> Result<(), MessageInfo>
-        where F: Fn(&PathBuf) -> String,
-    {
-        match move_files(files, |file| {
-            let mut file_c = file.clone();
-            file_c.set_file_name(
-                f(file)
-            );
-            if let Some(es) = file.extension() {
-                file_c.set_extension(es);
-            }
-            file_c
-        }) {
-            Ok(_) => Ok(()),
-            Err(v) => Err(v.join(",").as_str().into()),
-        }
-    }
-
     fn check(&mut self) -> Result<(), MessageInfo> {
         if self.specify_characters.is_empty() {
             return Err("请指定字符。".into());
@@ -73,7 +60,9 @@ impl RenameFilesRunInfo {
             );
         } else if self.is_replace() {
             let v: Vec<&str> = self.specify_characters.split("-批量替换至-").collect();
-            if v.len() != 2 { return Err("提供的字符信息不足以同时提取新旧字符串".into()); }
+            if v.len() != 2 {
+                return Err("提供的字符信息不足以同时提取新旧字符串".into());
+            }
             if let [old_str, new_str] = v[..] {
                 if old_str.is_empty() || new_str.is_empty() {
                     return Err("提供的字符信息不足以同时提取新旧字符串".into());
@@ -83,7 +72,6 @@ impl RenameFilesRunInfo {
             } else {
                 return Err("提供的字符信息不足以同时提取新旧字符串".into());
             }
-
         }
         if !Path::new(self.path.as_str()).is_dir() {
             return Err("提供的路径不是有效目录".into());
@@ -95,35 +83,50 @@ impl RenameFilesRunInfo {
         match self.method.as_str() {
             "批量移除指定字符" => {
                 let is_target = |entry: &_| {
-                    get_entry_target(entry, |entry_str| entry_str.contains(self.specify_characters.as_str()))
+                    get_target_str_ok(entry, |entry_str| {
+                        entry_str.contains(self.specify_characters.as_str())
+                            && (entry_str != self.specify_characters.as_str())
+                    })
                 };
                 get_entry(&self.path, is_target)
             }
             "批量移除指定前缀" => {
                 let is_target = |entry: &_| {
-                    get_entry_target(entry, |entry_str| entry_str.starts_with(self.specify_characters.as_str()))
+                    get_target_str_ok(entry, |entry_str| {
+                        entry_str.starts_with(self.specify_characters.as_str())
+                            && (entry_str != self.specify_characters.as_str())
+                    })
                 };
                 get_entry(&self.path, is_target)
             }
             "批量移除指定后缀" => {
                 let is_target = |entry: &_| {
-                    get_entry_target(entry, |entry_str| entry_str.ends_with(self.specify_characters.as_str()))
+                    get_target_str_ok(entry, |entry_str| {
+                        entry_str.ends_with(self.specify_characters.as_str())
+                            && (entry_str != self.specify_characters.as_str())
+                    })
                 };
                 get_entry(&self.path, is_target)
             }
             "批量新增指定前缀" | "批量新增指定后缀" => {
-                get_entry(&self.path, |entry: &_| get_entry_target(entry, |_entry_str| true))
+                get_entry(&self.path, |entry: &_| {
+                    get_target_str_ok(entry, |_entry_str| true)
+                })
             }
 
             "批量替换指定前缀" => {
                 let is_target = |entry: &_| {
-                    get_entry_target(entry, |entry_str| entry_str.starts_with(self.old_str.as_str()))
+                    get_target_str_ok(entry, |entry_str| {
+                        entry_str.starts_with(self.old_str.as_str())
+                    })
                 };
                 get_entry(&self.path, is_target)
             }
             "批量替换指定后缀" => {
                 let is_target = |entry: &_| {
-                    get_entry_target(entry, |entry_str| entry_str.ends_with(self.old_str.as_str()))
+                    get_target_str_ok(entry, |entry_str| {
+                        entry_str.ends_with(self.old_str.as_str())
+                    })
                 };
                 get_entry(&self.path, is_target)
             }
@@ -133,26 +136,24 @@ impl RenameFilesRunInfo {
             }
         }
     }
-    fn prevent_accidental_deletion(s: String, p: &PathBuf) -> String {
-        if s.len() == 0 || s.trim_start_matches(".") == "" {
-            p.clone().to_string_lossy().to_string()
-        } else {
-            s
-        }
-    }
+
     fn handle_remove_specify_characters(&self, files: Vec<PathBuf>) -> Result<(), MessageInfo> {
-        self.handle_names(files, |file| {
-            let tmp = file.file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .replacen(self.specify_characters.as_str(), "", 1);
-            Self::prevent_accidental_deletion(tmp, file)
+        handle_copy_move_files(files, rename, |file| {
+            file.file_stem().unwrap().to_str().unwrap().replacen(
+                self.specify_characters.as_str(),
+                "",
+                1,
+            )
         })
     }
 
-    fn handle_replace_pre_by_specify(&self, files: Vec<PathBuf>, old_str: &str, new_str: &str) -> Result<(), MessageInfo> {
-        self.handle_names(files, |file| {
+    fn handle_replace_pre_by_specify(
+        &self,
+        files: Vec<PathBuf>,
+        old_str: &str,
+        new_str: &str,
+    ) -> Result<(), MessageInfo> {
+        handle_copy_move_files(files, rename, |file| {
             file.file_stem()
                 .unwrap()
                 .to_str()
@@ -161,9 +162,15 @@ impl RenameFilesRunInfo {
         })
     }
 
-    fn handle_replace_suf_by_specify(&self, files: Vec<PathBuf>, old_str: &str, new_str: &str) -> Result<(), MessageInfo> {
-        self.handle_names(files, |file| {
-            let mut tmp = file.file_stem()
+    fn handle_replace_suf_by_specify(
+        &self,
+        files: Vec<PathBuf>,
+        old_str: &str,
+        new_str: &str,
+    ) -> Result<(), MessageInfo> {
+        handle_copy_move_files(files, rename, |file| {
+            let mut tmp = file
+                .file_stem()
                 .unwrap()
                 .to_str()
                 .unwrap()
@@ -176,81 +183,69 @@ impl RenameFilesRunInfo {
     }
 
     fn handle_remove_specify_pre(&self, files: Vec<PathBuf>) -> Result<(), MessageInfo> {
-        self.handle_names(files, |file| {
-            let tmp = file.file_stem()
+        handle_copy_move_files(files, rename, |file| {
+            file.file_stem()
                 .unwrap()
                 .to_str()
                 .unwrap()
                 .strip_prefix(self.specify_characters.as_str())
                 .unwrap()
-                .to_string();
-            Self::prevent_accidental_deletion(tmp, file)
+                .to_string()
         })
     }
 
     fn handle_remove_specify_suf(&self, files: Vec<PathBuf>) -> Result<(), MessageInfo> {
-        self.handle_names(files, |file| {
-            let tmp = file.file_stem()
+        handle_copy_move_files(files, rename, |file| {
+            file.file_stem()
                 .unwrap()
                 .to_str()
                 .unwrap()
                 .strip_suffix(self.specify_characters.as_str())
                 .unwrap()
-                .to_string();
-            Self::prevent_accidental_deletion(tmp, file)
+                .to_string()
         })
     }
 
     fn handle_add_specify_pre(&self, files: Vec<PathBuf>) -> Result<(), MessageInfo> {
-        self.handle_names(files, |file| {
+        handle_copy_move_files(files, rename, |file| {
             let mut tmp = String::from(self.specify_characters.as_str());
-            tmp.push_str(
-                file.file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-            );
+            tmp.push_str(file.file_stem().unwrap().to_str().unwrap());
             tmp
         })
     }
 
     fn handle_add_specify_suf(&self, files: Vec<PathBuf>) -> Result<(), MessageInfo> {
-        self.handle_names(files, |file| {
-            let mut tmp = String::from(
-                file.file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-            );
+        handle_copy_move_files(files, rename, |file| {
+            let mut tmp = String::from(file.file_stem().unwrap().to_str().unwrap());
             tmp.push_str(self.specify_characters.as_str());
             tmp
         })
     }
 
-
     fn run(&self, files: Vec<PathBuf>) -> Result<(), MessageInfo> {
         match self.method.as_str() {
             "批量移除指定字符" => self.handle_remove_specify_characters(files),
-            "批量替换指定前缀" | "批量替换指定后缀" => {
-                match self.method.as_str() {
-                    "批量替换指定前缀" => {
-                        self.handle_replace_pre_by_specify(files, self.old_str.as_str(), self.new_str.as_str())
-                    }
-                    "批量替换指定后缀" => {
-                        self.handle_replace_suf_by_specify(files, self.old_str.as_str(), self.new_str.as_str())
-                    }
-                    _ => Ok(())
-                }
-            }
+            "批量替换指定前缀" | "批量替换指定后缀" => match self.method.as_str() {
+                "批量替换指定前缀" => self.handle_replace_pre_by_specify(
+                    files,
+                    self.old_str.as_str(),
+                    self.new_str.as_str(),
+                ),
+                "批量替换指定后缀" => self.handle_replace_suf_by_specify(
+                    files,
+                    self.old_str.as_str(),
+                    self.new_str.as_str(),
+                ),
+                _ => Ok(()),
+            },
             "批量移除指定前缀" => self.handle_remove_specify_pre(files),
             "批量移除指定后缀" => self.handle_remove_specify_suf(files),
             "批量新增指定前缀" => self.handle_add_specify_pre(files),
             "批量新增指定后缀" => self.handle_add_specify_suf(files),
-            _ => Ok(())
+            _ => Ok(()),
         }
         // Ok(())
     }
-
 
     fn is_replace(&self) -> bool {
         self.method == "批量替换指定前缀" || self.method == "批量替换指定后缀"
