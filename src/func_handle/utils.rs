@@ -49,10 +49,10 @@ where
         if let Some(es) = file.extension() {
             file_c.set_extension(es);
         }
-        if file_c.is_file() {
+        if file_c.is_file() || new_files.contains(&file_c) {
             new_file_name.push_str(
                 format!(
-                    "(来自{})",
+                    "来自{}",
                     file.to_str().unwrap().replace("/", "-").replace("\\", "-")
                 )
                 .as_str(),
